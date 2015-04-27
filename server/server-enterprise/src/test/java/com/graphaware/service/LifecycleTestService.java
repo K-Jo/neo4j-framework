@@ -14,30 +14,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.server;
+package com.graphaware.service;
 
-import org.neo4j.graphdb.DynamicRelationshipType;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Transaction;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 @Service
-public class LinkingServiceImpl implements LinkingService {
+public class LifecycleTestService {
 
-    private final GraphDatabaseService database;
+    public static boolean initCalled = false;
+    public static boolean destroyCalled = false;
 
-    @Autowired
-    public LinkingServiceImpl(GraphDatabaseService database) {
-        this.database = database;
+    @PostConstruct
+    public void init() {
+        initCalled = true;
     }
 
-    @Override
-    public void link(long startNodeId, long endNodeId) {
-        try (Transaction tx = database.beginTx()) {
-            database.getNodeById(startNodeId).createRelationshipTo(database.getNodeById(endNodeId),
-                    DynamicRelationshipType.withName("TEST"));
-            tx.success();
-        }
+    @PreDestroy
+    public void destroy() {
+        destroyCalled = true;
     }
 }

@@ -14,12 +14,32 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.server;
+package com.graphaware.writer;
 
-/**
- * A service for testing.
- */
-public interface LinkingService {
+import org.neo4j.graphdb.GraphDatabaseService;
 
-    void link(long startNodeId, long endNodeId);
+public class LifecycleTestWriter extends TxPerTaskWriter {
+
+    public static boolean initCalled = false;
+    public static boolean destroyCalled = false;
+
+    public LifecycleTestWriter(GraphDatabaseService database) {
+        super(database);
+    }
+
+    public LifecycleTestWriter(GraphDatabaseService database, int queueCapacity) {
+        super(database, queueCapacity);
+    }
+
+    @Override
+    public void start() {
+        initCalled = true;
+        super.start();
+    }
+
+    @Override
+    public void stop() {
+        destroyCalled = true;
+        super.stop();
+    }
 }

@@ -39,6 +39,7 @@ import org.neo4j.server.web.Jetty9WebServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.web.WebApplicationInitializer;
 
@@ -65,6 +66,7 @@ public class GraphAwareJetty9WebServer extends Jetty9WebServer {
     private final Config config;
     private LongRunningTransactionFilter txFilter;
     private Database database;
+    private AbstractApplicationContext rootContext;
 
     public GraphAwareJetty9WebServer(LogProvider logProvider, Database database, Config config) {
         super(logProvider, config);
@@ -74,7 +76,7 @@ public class GraphAwareJetty9WebServer extends Jetty9WebServer {
 
     @Override
     protected void startJetty() {
-        ApplicationContext rootContext = createRootApplicationContext();
+        rootContext = createRootApplicationContext();
 
         HandlerList handlerList = findHandlerList();
 
@@ -87,8 +89,18 @@ public class GraphAwareJetty9WebServer extends Jetty9WebServer {
         super.startJetty();
     }
 
-    protected ApplicationContext createRootApplicationContext() {
+    @Override
+    public void stop() {
+        if (rootContext != null) {
+            rootContext.close();
+        }
+
+        super.stop();
+    }
+
+    protected AbstractApplicationContext createRootApplicationContext() {
         GenericApplicationContext parent = new GenericApplicationContext();
+        parent.registerShutdownHook();
         parent.getBeanFactory().registerSingleton("database", database.getGraph());
 
         GraphAwareRuntime runtime = RuntimeRegistry.getRuntime(database.getGraph());
@@ -131,7 +143,7 @@ public class GraphAwareJetty9WebServer extends Jetty9WebServer {
     protected final void addDefaultFilters(ServletContextHandler context) {
         //dirty dirty stuff
         try {
-            Method m = this.getClass().getSuperclass().getDeclaredMethod("addFiltersTo", ServletContextHandler.class);
+            Method m = Jetty9WebServer.class.getDeclaredMethod("addFiltersTo", ServletContextHandler.class);
             m.setAccessible(true);
             m.invoke(this, context);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {

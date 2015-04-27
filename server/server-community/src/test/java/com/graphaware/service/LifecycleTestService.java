@@ -14,23 +14,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.server;
+package com.graphaware.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
-@Controller
-@RequestMapping(value = "/link")
-public class LinkingController {
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
-    @Autowired
-    private LinkingService linkingService;
+@Service
+public class LifecycleTestService {
 
-    @RequestMapping(value = "/{start}/{end}", method = RequestMethod.POST)
-    @ResponseStatus(HttpStatus.CREATED)
-    public void link(@PathVariable long start, @PathVariable long end) {
-        linkingService.link(start, end);
+    public static boolean initCalled = false;
+    public static boolean destroyCalled = false;
+
+    @PostConstruct
+    public void init() {
+        initCalled = true;
+    }
+
+    @PreDestroy
+    public void destroy() {
+        destroyCalled = true;
     }
 }
